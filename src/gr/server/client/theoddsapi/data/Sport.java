@@ -1,4 +1,4 @@
-package gr.server.client.data;
+package gr.server.client.theoddsapi.data;
 
 public class Sport {
 	

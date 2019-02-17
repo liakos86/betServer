@@ -8,7 +8,7 @@ public interface ServerConstants {
 	
 	public static final String GET_UPCOMING_URL = "odds/?sport=upcoming&region=uk&mkt=h2h&apiKey=";
 
-	public static final String GET_PREMIER_LEAGUE_URL = "odds/?sport=upcoming&region=uk&mkt=h2h&apiKey=";
+	public static final String GET_PREMIER_LEAGUE_URL = "odds/?sport=soccer_epl&region=uk&mkt=h2h&apiKey=";
 	
 	public static final String GET_SPORTS_URL = "sports/?all=1&apiKey=";
 

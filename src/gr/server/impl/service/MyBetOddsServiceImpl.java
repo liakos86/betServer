@@ -3,6 +3,7 @@ package gr.server.impl.service;
 /**
  * 
  */
+import gr.server.data.util.FileHelperUtils;
 import gr.server.def.service.MyBetOddsService;
 import gr.server.model.Person;
 import gr.server.model.Response;
@@ -33,11 +34,6 @@ import javax.ws.rs.core.MediaType;
 public class MyBetOddsServiceImpl implements MyBetOddsService {
 
 	private static Map<Integer,Person> persons = new HashMap<Integer,Person>();
-	
-	static{
-		
-		persons.put(1, new Person(32, "liakos"));
-	}
 	
 	@Override
 	@POST
@@ -86,39 +82,12 @@ public class MyBetOddsServiceImpl implements MyBetOddsService {
 		return p;
 	}
 
-	
-	@Override
-	@GET
-	@Path("/getAll")
-	public Person[] getAllPersons() {
-		Set<Integer> ids = persons.keySet();
-		Person[] p = new Person[ids.size()];
-		int i=0;
-		for(Integer id : ids){
-			p[i] = persons.get(id);
-			i++;
-		}
-		return p;
-	}
-	
 	@Override
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/getUpcoming")
 	public String getUpcoming() throws IOException {
-		
-	     File file = new File("C:\\footballAPI-odds.txt");
-	     FileInputStream str = new FileInputStream(file);
-	     
-	     byte[] bytes = new byte[(int) file.length()];
-	     str.read(bytes);
-	     str.close();
-	     
-	     String content = new String(bytes);
-	     System.out.println(content);
-	     
-		return content;
-		
+		return FileHelperUtils.readFromFile("/mockResponses/jsonServerEPL.txt");
 	}
 	
 	@Override
@@ -126,25 +95,7 @@ public class MyBetOddsServiceImpl implements MyBetOddsService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/getLeagues")
 	public String getLeagues() throws IOException {
-		StringBuilder result = new StringBuilder("");
-		//Get file from resources folder
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		File file = new File(classLoader.getResource("/jsonServerEPL.txt").getFile());
-		try {
-			Scanner scanner = new Scanner(file);
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-				result.append(line).append("\n");
-			}
-
-			scanner.close();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-			
-		return result.toString();
-	     
+		return FileHelperUtils.readFromFile("/mockResponses/jsonServerEPL.txt");
 	}
 
 }

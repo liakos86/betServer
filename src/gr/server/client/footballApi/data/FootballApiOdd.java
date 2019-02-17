@@ -1,4 +1,4 @@
-package gr.server.client.data.footballApi;
+package gr.server.client.footballApi.data;
 
 import com.google.gson.annotations.SerializedName;
 

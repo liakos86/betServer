@@ -1,4 +1,4 @@
-package gr.server.client.data.footballApi;
+package gr.server.client.footballApi.data;
 
 
 public class Api {

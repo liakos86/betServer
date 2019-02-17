@@ -16,8 +16,6 @@ public interface MyBetOddsService {
 	
 	public Person getPerson(int id);
 	
-	public Person[] getAllPersons();
-
 	public String getUpcoming() throws IOException;
 
 	public String getLeagues() throws IOException;
