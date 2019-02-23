@@ -11,8 +11,10 @@ public class TestOddsApiClient {
 	public static void main(String[] args) throws IOException {
 		
 		
-		Server.LOG.debug("ffff");
-		System.out.println(OddsApiClient.getLeagues().get(OddsApiConstants.PREMIER_LEAGUE).get(0).getTeams());
+		OddsApiClient.getLeaguesWithEvents();
+		
+//		Server.LOG.debug("ffff");
+//		System.out.println(OddsApiClient.getLeaguesWithEvents().get(OddsApiConstants.PREMIER_LEAGUE).get(0).getTeams());
 		
 	}
 	

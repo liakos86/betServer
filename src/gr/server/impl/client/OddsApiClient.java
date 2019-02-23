@@ -11,9 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -61,14 +59,15 @@ public class OddsApiClient {
 	 * 
 	 * @throws IOException
 	 */
-	public static Map<String, List<UpcomingEvent>> getLeagues() throws IOException {
+	public static void getLeaguesWithEvents() throws IOException {
+		
+		
 		String url = ServerConstants.BASE_API_URL + ServerConstants.GET_PREMIER_LEAGUE_URL + ServerConstants.ODDS_API_KEY;//  odds/?sport=upcoming&region=uk&mkt=h2h&apiKey="+ServerConstants.ODDS_API_KEY;
 		url = "http://localhost:8080/betServer/ws/betServer/getLeagues";
 		String content = fetchContent(url);
 		UpcomingEvents events = new Gson().fromJson(content, new TypeToken<UpcomingEvents>() {}.getType());
-		Map<String, List<UpcomingEvent>> leaguesToSports = new HashMap<String, List<UpcomingEvent>>();
-		leaguesToSports.put("premierLeague", events.getData());
-		return leaguesToSports;
+		
+		new MongoClientHelperImpl().updateEvents(events.getData());
 		
 	}
 	

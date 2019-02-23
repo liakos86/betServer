@@ -1,10 +1,13 @@
 package gr.server.def.client;
 
-import org.bson.Document;
-
 import gr.server.application.exception.UserExistsException;
+import gr.server.client.theoddsapi.data.UpcomingEvent;
 import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserPrediction;
+
+import java.util.List;
+
+import org.bson.Document;
 
 import com.mongodb.MongoClient;
 
@@ -24,5 +27,13 @@ public interface MongoClientHelper {
 	 * @throws UserExistsException
 	 */
 	public Document createUser(User user) throws UserExistsException;
+	
+	/**
+	 * This will run via a Thread every morning in order to fetch new events 
+	 * and replace the existing ones.
+	 * 
+	 * @param leaguesToSports
+	 */
+	public void updateEvents(List<UpcomingEvent> leaguesToSports);
 	
 }

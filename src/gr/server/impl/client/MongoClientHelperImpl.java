@@ -1,5 +1,11 @@
 package gr.server.impl.client;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import gr.server.application.exception.UserExistsException;
+import gr.server.client.theoddsapi.data.UpcomingEvent;
+import gr.server.data.Server;
 import gr.server.data.ServerConstants;
 import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserPrediction;
@@ -13,6 +19,7 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.InsertManyOptions;
 
 
 
@@ -72,6 +79,36 @@ implements MongoClientHelper {
 		return newUser;
 	}
 
+	@Override
+	public void updateEvents(List<UpcomingEvent> list) {
+		
+		List<Document> newEvents = new ArrayList<Document>();
+		for (UpcomingEvent upcomingEvent : list) {
+			
+			 Document newEvent = new Document("league", upcomingEvent.getSport_key())
+			 .append("sport", "socccer")
+			 .append("commenceTime", upcomingEvent.getCommence_time())
+			 .append("homeTeam", upcomingEvent.getHome_team())
+			 .append("teams", "[" + new Document("team1", upcomingEvent.getTeams().get(0)).append("team2", upcomingEvent.getTeams().get(0)) +"]")
+			// .append("odds", new Document ("h2h" , upcomingEvent.getSites().get(0).getOdds().getH2h()))
+			 ;
+			 
+				
+			newEvents.add(newEvent);
+		}
+		MongoClient client = getMongoClient();
+		MongoCollection<Document> events = client.getDatabase("BETDB").getCollection("event");
+		
+		events.insertMany(newEvents);	
+
+		for (Map.Entry<String, List<String>> entry : Server.AVAILABLE_LEAGUES.entrySet()) {
+			
+			
+			
+		}
+		
+	}
+
 	/**
 	 * mongoClient is a Singleton.
 	 * We make sure here.
@@ -84,5 +121,6 @@ implements MongoClientHelper {
 		}
 		return mongoClient;
 	}
+
 	
 }

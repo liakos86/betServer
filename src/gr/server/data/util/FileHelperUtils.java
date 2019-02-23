@@ -18,7 +18,7 @@ public class FileHelperUtils {
 		StringBuilder result = new StringBuilder("");
 		//Get file from resources folder
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		File file = new File(classLoader.getResource("/jsonServerEPL.txt").getFile());
+		File file = new File(classLoader.getResource("/mockResponses/jsonServerEPL.txt").getFile());
 		try {
 			Scanner scanner = new Scanner(file);
 			while (scanner.hasNextLine()) {
@@ -27,7 +27,6 @@ public class FileHelperUtils {
 			}
 
 			scanner.close();
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

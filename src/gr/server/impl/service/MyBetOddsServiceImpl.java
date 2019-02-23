@@ -26,6 +26,7 @@ import org.bson.Document;
 @Produces(MediaType.APPLICATION_XML)
 public class MyBetOddsServiceImpl 
 implements MyBetOddsService {
+	
 
 	
 //	@Override
