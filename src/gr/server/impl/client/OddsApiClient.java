@@ -1,4 +1,4 @@
-package gr.server.client;
+package gr.server.impl.client;
 
 import gr.server.client.theoddsapi.data.Sport;
 import gr.server.client.theoddsapi.data.Sports;
@@ -28,7 +28,7 @@ public class OddsApiClient {
 	 */
 	static List<Sport> getSports() throws IOException {
 		String url = ServerConstants.BASE_API_URL + ServerConstants.GET_SPORTS_URL + ServerConstants.ODDS_API_KEY;//  odds/?sport=upcoming&region=uk&mkt=h2h&apiKey="+ServerConstants.ODDS_API_KEY;
-		url = "http://localhost:8080/betServer/ws/person/getSports";
+		url = "http://localhost:8080/betServer/ws/betServer/getSports";
 		String content = fetchContent(url);
 		Gson gson = new Gson();
 		Sports sports = gson.fromJson(content,
@@ -46,7 +46,7 @@ public class OddsApiClient {
 	 */
 	static List<UpcomingEvent> getUpcoming() throws IOException {
 		String url = ServerConstants.BASE_API_URL + ServerConstants.GET_UPCOMING_URL + ServerConstants.ODDS_API_KEY;
-		url = "http://localhost:8080/betServer/ws/person/getUpcoming";
+		url = "http://localhost:8080/betServer/ws/betServer/getUpcoming";
 		String content = fetchContent(url);
 		Gson gson = new Gson();
 		UpcomingEvents events = gson.fromJson(content,
@@ -61,9 +61,9 @@ public class OddsApiClient {
 	 * 
 	 * @throws IOException
 	 */
-	static Map<String, List<UpcomingEvent>> getLeagues() throws IOException {
+	public static Map<String, List<UpcomingEvent>> getLeagues() throws IOException {
 		String url = ServerConstants.BASE_API_URL + ServerConstants.GET_PREMIER_LEAGUE_URL + ServerConstants.ODDS_API_KEY;//  odds/?sport=upcoming&region=uk&mkt=h2h&apiKey="+ServerConstants.ODDS_API_KEY;
-		url = "http://localhost:8080/betServer/ws/person/getLeagues";
+		url = "http://localhost:8080/betServer/ws/betServer/getLeagues";
 		String content = fetchContent(url);
 		UpcomingEvents events = new Gson().fromJson(content, new TypeToken<UpcomingEvents>() {}.getType());
 		Map<String, List<UpcomingEvent>> leaguesToSports = new HashMap<String, List<UpcomingEvent>>();

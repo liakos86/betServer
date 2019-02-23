@@ -2,6 +2,7 @@ package gr.server.client;
 
 import gr.server.client.theoddsapi.data.OddsApiConstants;
 import gr.server.data.Server;
+import gr.server.impl.client.OddsApiClient;
 
 import java.io.IOException;
 

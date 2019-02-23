@@ -12,4 +12,6 @@ public interface ServerConstants {
 	
 	public static final String GET_SPORTS_URL = "sports/?all=1&apiKey=";
 
+	public static final Double STARTING_BALANCE = 1000d;
+
 }
