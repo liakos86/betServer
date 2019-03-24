@@ -1,24 +1,36 @@
 package gr.server.impl.service;
 
+import gr.client.android.model.AndroidUpcomingEvent;
 import gr.server.application.exception.UserExistsException;
+import gr.server.client.theoddsapi.data.UpcomingEvent;
+import gr.server.data.user.enums.BetStatus;
 import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserPrediction;
 import gr.server.data.util.FileHelperUtils;
 import gr.server.def.service.MyBetOddsService;
 import gr.server.impl.client.MongoClientHelperImpl;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.bson.Document;
 
-
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 
 
 @Path("/betServer")
@@ -27,20 +39,52 @@ import org.bson.Document;
 public class MyBetOddsServiceImpl 
 implements MyBetOddsService {
 	
-
 	
-//	@Override
-//	@GET
-//    @Path("/{id}/delete")
-//	public Response deletePerson(@PathParam("id") int id) {
+	@Override
+	@GET
+    @Path("/{id}/myOpenBets")
+	public List<UserPrediction> getMyOpenBets(@PathParam("id") String id) {
+		return new MongoClientHelperImpl().getOpenBetsFor(id);
+	}
 	
 	@Override
 	@POST
     @Path("/placeBet")
-	public Document placeBet(UserPrediction userPrediction) {
-		return new MongoClientHelperImpl().placePrediction(userPrediction);
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String placeBet(InputStream incomingStream) {
+		
+		StringBuilder userPredictionBuilder = new StringBuilder();
+		try{
+			BufferedReader in = new BufferedReader(new InputStreamReader(incomingStream));
+			String line = null;
+			while((line = in.readLine()) != null){
+				userPredictionBuilder.append(line);
+			}
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		
+		UserPrediction prediction = new Gson().fromJson(userPredictionBuilder.toString(),
+				new TypeToken<UserPrediction>() {}.getType());
+		prediction = new MongoClientHelperImpl().placePrediction(prediction);
+		
+		return new Gson().toJson(prediction);
 		
 	}
+	
+//	@Override
+//	@POST
+//    @Path("/placeBet/{eventId}/{userId}/{prediction}/{amount}")
+//	public Document placeBet(@PathParam("eventId") String eventId, @PathParam("userId") String userId, @PathParam("prediction") String prediction, @PathParam("amount") Integer amount) {
+//		UserPrediction userPrediction = new UserPrediction();
+//		userPrediction.setBetAmount(amount);
+//		userPrediction.setEventId(eventId);
+//		userPrediction.setStatus(BetStatus.PENDING);
+//		userPrediction.setUserId(userId);
+//		userPrediction.setPrediction(prediction);
+//		return new MongoClientHelperImpl().placePrediction(userPrediction);
+//		
+//	}
 	
 	@Override
 	@POST
@@ -67,27 +111,20 @@ implements MyBetOddsService {
 //		return response;
 //	}
 //
-//	@Override
-//	@GET
-//	@Path("/{id}/get")
-//	public Person getPerson(@PathParam("id") int id) {
-//		return persons.get(id);
-//	}
-//	
-//	@GET
-//	@Path("/{id}/getDummy")
-//	public Person getDummyPerson(@PathParam("id") int id) {
-//		Person p = new Person(99, "Dummy");
-//		p.setId(id);
-//		return p;
-//	}
-
+	@Override
+	@GET
+	@Path("/{id}/get")
+	public User getUser(@PathParam("id") String id) {
+		return new MongoClientHelperImpl().getUser(id);
+	}
+	
 	@Override
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/getUpcoming")
-	public String getUpcoming() throws IOException {
-		return FileHelperUtils.readFromFile("/mockResponses/jsonServerEPL.txt");
+	@Path("/getEvents")
+	public String getSportsWithEvents(){
+		return  new Gson().toJson(new MongoClientHelperImpl().retrieveSportsWithEvents()); 
+	
 	}
 	
 	@Override
@@ -96,6 +133,15 @@ implements MyBetOddsService {
 	@Path("/getLeagues")
 	public String getLeagues() throws IOException {
 		return FileHelperUtils.readFromFile("/mockResponses/jsonServerEPL.txt");
+	}
+	
+	@Override
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/getLeaderBoard")
+	public String getLeaderBoard(){
+		return  new Gson().toJson(new MongoClientHelperImpl().retrieveLeaderBoard()); 
+	
 	}
 
 }

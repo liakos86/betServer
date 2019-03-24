@@ -4,6 +4,8 @@ import gr.server.data.user.enums.BetStatus;
 
 public class UserPrediction {
 	
+	String predictionId;
+	
 	String eventId;
 	
 	String userId;
@@ -65,7 +67,14 @@ public class UserPrediction {
 	public void setResult(String result) {
 		this.result = result;
 	}
+
+	public void setPredictionId(String predictionId) {
+		this.predictionId = predictionId;
+	}
 	
+	public String getPredictionId() {
+		return predictionId;
+	}
 	
 
 }

@@ -4,6 +4,7 @@ import gr.server.client.theoddsapi.data.Sport;
 import gr.server.client.theoddsapi.data.Sports;
 import gr.server.client.theoddsapi.data.UpcomingEvent;
 import gr.server.client.theoddsapi.data.UpcomingEvents;
+import gr.server.data.Server;
 import gr.server.data.ServerConstants;
 
 import java.io.BufferedReader;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
@@ -61,13 +63,21 @@ public class OddsApiClient {
 	 */
 	public static void getLeaguesWithEvents() throws IOException {
 		
+		List<UpcomingEvent> allEvents = new ArrayList<UpcomingEvent>();
 		
-		String url = ServerConstants.BASE_API_URL + ServerConstants.GET_PREMIER_LEAGUE_URL + ServerConstants.ODDS_API_KEY;//  odds/?sport=upcoming&region=uk&mkt=h2h&apiKey="+ServerConstants.ODDS_API_KEY;
-		url = "http://localhost:8080/betServer/ws/betServer/getLeagues";
-		String content = fetchContent(url);
-		UpcomingEvents events = new Gson().fromJson(content, new TypeToken<UpcomingEvents>() {}.getType());
+		//for (String league : Server.AVAILABLE_LEAGUES) {
+			
+			//String url = ServerConstants.BASE_API_URL + league + ServerConstants.ODDS_API_SUFFIX_URL + ServerConstants.ODDS_API_KEY;//  odds/?sport=upcoming&region=uk&mkt=h2h&apiKey="+ServerConstants.ODDS_API_KEY;
+			String url = "http://localhost:8080/betServer/ws/betServer/getLeagues";
+			String content = fetchContent(url);
+			UpcomingEvents events = new Gson().fromJson(content, new TypeToken<UpcomingEvents>() {}.getType());
+			List<UpcomingEvent> data = events.getData();
+			allEvents.addAll(data);
 		
-		new MongoClientHelperImpl().updateEvents(events.getData());
+		//}
+		
+		
+		new MongoClientHelperImpl().updateEvents(allEvents);
 		
 	}
 	

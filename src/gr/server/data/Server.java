@@ -11,12 +11,15 @@ public final class Server {
 
 	public static final Logger LOG = Logger.getLogger(Server.class);
 	
-	public static Map<String, List<String>> AVAILABLE_LEAGUES;
+	public static final String soccer_chl = "soccer_uefa_champs_league";
+	
+	public static final String soccer_premier_league = "soccer_epl";
+	
+	public static List<String> AVAILABLE_LEAGUES;
 	
 	static{
-		AVAILABLE_LEAGUES = new HashMap<String, List<String>>();
-		ArrayList<String> greatBritain = new ArrayList<String>();
-		greatBritain.add("premier league");
-		AVAILABLE_LEAGUES.put("soccer", greatBritain);
+		AVAILABLE_LEAGUES = new ArrayList<String>();
+		AVAILABLE_LEAGUES.add(soccer_chl);
+		AVAILABLE_LEAGUES.add(soccer_premier_league);
 	}
 }
