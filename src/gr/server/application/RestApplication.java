@@ -14,7 +14,7 @@ import javax.ws.rs.core.Application;
  */
 public class RestApplication  extends Application
 {
-
+	
     @Override
     public Set<Class<?>> getClasses() {
         Set<Class<?>> resources = new HashSet<Class<?>>();
@@ -26,7 +26,7 @@ public class RestApplication  extends Application
     
     @Override
     public Set<Object> getSingletons() {
-        return Collections.emptySet();
+    	return Collections.emptySet();
     }
    
 }

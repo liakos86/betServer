@@ -1,65 +1,44 @@
 package gr.server.data.user.model;
 
-import gr.server.data.user.enums.BetStatus;
+import gr.server.data.api.model.events.Event;
 
-public class UserPrediction {
+import java.io.Serializable;
+
+/**
+ * This class represents a prediction on an {@link Event} by a {@link User}.
+ * It participates along with other {@link UserPrediction}s into a {@link UserBet}
+ *
+ */
+public class UserPrediction implements Serializable{
 	
-	String predictionId;
-	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	String eventId;
-	
-	String userId;
 	
 	String prediction;
 	
-	BetStatus status;
-	
 	String result;
 	
-	Integer betAmount;
+	Double multiplier;
 	
-	
-
-	public Integer getBetAmount() {
-		return betAmount;
+	public Double getMultiplier() {
+		return multiplier;
 	}
 
-	public void setBetAmount(Integer betAmount) {
-		this.betAmount = betAmount;
+	public void setMultiplier(Double multiplier) {
+		this.multiplier = multiplier;
 	}
-
+	
 	public String getEventId() {
 		return eventId;
 	}
-
+	
 	public void setEventId(String eventId) {
 		this.eventId = eventId;
 	}
-
-	public String getUserId() {
-		return userId;
-	}
-
-	public void setUserId(String userId) {
-		this.userId = userId;
-	}
-
-	public String getPrediction() {
-		return prediction;
-	}
-
-	public void setPrediction(String prediction) {
-		this.prediction = prediction;
-	}
-
-	public BetStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(BetStatus status) {
-		this.status = status;
-	}
-
 	public String getResult() {
 		return result;
 	}
@@ -67,14 +46,13 @@ public class UserPrediction {
 	public void setResult(String result) {
 		this.result = result;
 	}
+	
+	public String getPrediction() {
+		return prediction;
+	}
 
-	public void setPredictionId(String predictionId) {
-		this.predictionId = predictionId;
+	public void setPrediction(String prediction) {
+		this.prediction = prediction;
 	}
-	
-	public String getPredictionId() {
-		return predictionId;
-	}
-	
 
 }

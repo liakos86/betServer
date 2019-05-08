@@ -2,13 +2,11 @@ package gr.server.def.service;
 
 import gr.server.application.exception.UserExistsException;
 import gr.server.data.user.model.User;
-import gr.server.data.user.model.UserPrediction;
+import gr.server.data.user.model.UserBet;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-
-import org.bson.Document;
 
 /**
  * Rest service for sending data to the mobile devices.
@@ -16,19 +14,20 @@ import org.bson.Document;
  */
 public interface MyBetOddsService {
 
-	public String getLeagues() throws IOException;
 	
-	public String placeBet(InputStream incoming);
+	String placeBet(InputStream incoming);
 	
-	public Document createUser(User user) throws UserExistsException;
+	String createUser(InputStream incomingStream) throws UserExistsException;
 
-	List<UserPrediction> getMyOpenBets(String id);
+	List<UserBet> getMyOpenBets(String id);
 
 	String getSportsWithEvents();
 
-	User getUser(String id);
+	String getUser(String id);
 
 	String getLeaderBoard();
+
+	String getCountries() throws IOException;
 
 
 }

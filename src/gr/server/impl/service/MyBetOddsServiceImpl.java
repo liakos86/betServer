@@ -1,11 +1,8 @@
 package gr.server.impl.service;
 
-import gr.client.android.model.AndroidUpcomingEvent;
 import gr.server.application.exception.UserExistsException;
-import gr.server.client.theoddsapi.data.UpcomingEvent;
-import gr.server.data.user.enums.BetStatus;
 import gr.server.data.user.model.User;
-import gr.server.data.user.model.UserPrediction;
+import gr.server.data.user.model.UserBet;
 import gr.server.data.util.FileHelperUtils;
 import gr.server.def.service.MyBetOddsService;
 import gr.server.impl.client.MongoClientHelperImpl;
@@ -15,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -25,12 +21,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.bson.Document;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
 
 
 @Path("/betServer")
@@ -40,11 +32,12 @@ public class MyBetOddsServiceImpl
 implements MyBetOddsService {
 	
 	
+	
 	@Override
 	@GET
     @Path("/{id}/myOpenBets")
-	public List<UserPrediction> getMyOpenBets(@PathParam("id") String id) {
-		return new MongoClientHelperImpl().getOpenBetsFor(id);
+	public List<UserBet> getMyOpenBets(@PathParam("id") String id) {
+		return new MongoClientHelperImpl().getBetsForUser(id);
 	}
 	
 	@Override
@@ -64,9 +57,9 @@ implements MyBetOddsService {
 			e.printStackTrace();
 		}
 		
-		UserPrediction prediction = new Gson().fromJson(userPredictionBuilder.toString(),
-				new TypeToken<UserPrediction>() {}.getType());
-		prediction = new MongoClientHelperImpl().placePrediction(prediction);
+		UserBet prediction = new Gson().fromJson(userPredictionBuilder.toString(),
+				new TypeToken<UserBet>() {}.getType());
+		prediction = new MongoClientHelperImpl().placeBet(prediction);
 		
 		return new Gson().toJson(prediction);
 		
@@ -89,8 +82,24 @@ implements MyBetOddsService {
 	@Override
 	@POST
     @Path("/createUser")
-	public Document createUser(User user) throws UserExistsException {
-		return new MongoClientHelperImpl().createUser(user);
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String createUser(InputStream incomingStream) throws UserExistsException {
+		
+		StringBuilder userBuilder = new StringBuilder();
+		try{
+			BufferedReader in = new BufferedReader(new InputStreamReader(incomingStream));
+			String line = null;
+			while((line = in.readLine()) != null){
+				userBuilder.append(line);
+			}
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		
+		User user = new Gson().fromJson(userBuilder.toString(),
+				new TypeToken<User>() {}.getType());
+		
+		return new Gson().toJson(new MongoClientHelperImpl().createUser(user));
 	}
 	
 	
@@ -114,8 +123,8 @@ implements MyBetOddsService {
 	@Override
 	@GET
 	@Path("/{id}/get")
-	public User getUser(@PathParam("id") String id) {
-		return new MongoClientHelperImpl().getUser(id);
+	public String getUser(@PathParam("id") String id) {
+		return new Gson().toJson(new MongoClientHelperImpl().getUser(id));
 	}
 	
 	@Override
@@ -123,16 +132,16 @@ implements MyBetOddsService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/getEvents")
 	public String getSportsWithEvents(){
-		return  new Gson().toJson(new MongoClientHelperImpl().retrieveSportsWithEvents()); 
+		return  new Gson().toJson(new MongoClientHelperImpl().retrieveCompetitionsWithEventsAndOdds()); 
 	
 	}
 	
 	@Override
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/getLeagues")
-	public String getLeagues() throws IOException {
-		return FileHelperUtils.readFromFile("/mockResponses/jsonServerEPL.txt");
+	@Path("/getCountries")
+	public String getCountries() throws IOException {
+		return FileHelperUtils.readFromFile("/mockResponses/countries.txt");
 	}
 	
 	@Override

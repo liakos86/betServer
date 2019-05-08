@@ -1,5 +1,10 @@
 package gr.server.data.user.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import gr.server.data.ServerConstants;
+
 /**
  * User of the application.
  * 
@@ -21,7 +26,7 @@ public class User {
 	/**
 	 * Each user has a balance, i.e. a virtual amount.
 	 */
-	Integer balance;
+	Double balance;
 	
 	/**
 	 * Number of won slips.
@@ -42,6 +47,26 @@ public class User {
 	 * Number of lost events.
 	 */
 	Integer lostEventsCount;
+	
+	List<UserBet> userBets;
+
+	public User(String id) {
+		this.id = id;
+		this.balance = ServerConstants.STARTING_BALANCE;
+		this.lostEventsCount = 0;
+		this.lostSlipsCount = 0;
+		this.wonEventsCount = 0;
+		this.wonSlipsCount = 0;
+		this.userBets = new ArrayList<UserBet>();
+	}
+	
+	public List<UserBet> getUserBets() {
+		return userBets;
+	}
+
+	public void setUserBets(List<UserBet> userBets) {
+		this.userBets = userBets;
+	}
 
 	public String getId() {
 		return id;
@@ -59,11 +84,11 @@ public class User {
 		this.username = username;
 	}
 
-	public Integer getBalance() {
+	public Double getBalance() {
 		return balance;
 	}
 
-	public void setBalance(Integer balance) {
+	public void setBalance(Double balance) {
 		this.balance = balance;
 	}
 
