@@ -1,6 +1,8 @@
 package gr.server.application;
 
+import gr.server.data.user.model.User;
 import gr.server.impl.client.MongoClientHelperImpl;
+import gr.server.mongo.util.MongoCollectionUtils;
 
 import java.util.Date;
 import java.util.Timer;
@@ -25,7 +27,10 @@ implements ServletContextListener {
 		        public void run() {
 		            System.out.println("Task performed on: " + new Date() + "n" +
 		              "Thread's name: " + Thread.currentThread().getName());
-		            new MongoClientHelperImpl().retrieveLeaderBoard();
+		            
+		            User u = new User("rr");
+		            u.setBalance(44d);
+		            new MongoClientHelperImpl().settleBets();
 		        }
 		    };
 		    Timer timer = new Timer("Timer");

@@ -5,7 +5,7 @@ import gr.server.data.api.model.Competition;
 import gr.server.data.api.model.Country;
 import gr.server.data.api.model.Odd;
 import gr.server.data.api.model.events.Event;
-import gr.server.data.user.enums.SupportedLeagues;
+import gr.server.data.enums.SupportedLeague;
 import gr.server.data.util.FileHelperUtils;
 import gr.server.util.HttpHelper;
 
@@ -46,8 +46,8 @@ public class ApiFootballClient {
 	 * @throws IOException
 	 */
 	public static void getCompetitions() throws IOException {
-		Map<SupportedLeagues, List<Competition>> competitionsPerCountry = new HashMap<SupportedLeagues, List<Competition>>();
-		for (SupportedLeagues league : SupportedLeagues.values()) {
+		Map<SupportedLeague, List<Competition>> competitionsPerCountry = new HashMap<SupportedLeague, List<Competition>>();
+		for (SupportedLeague league : SupportedLeague.values()) {
 			String url = ServerConstants.GET_LEAGUES_FOR_COUNTRY_URL + league.getCountryId() + ServerConstants.API_FOOTBALL_KEY;
 			String content = new HttpHelper().fetchGetContent(url);
 			List<Competition> competitions = new Gson().fromJson(content,new TypeToken<List<Competition>>() {}.getType());
@@ -58,17 +58,19 @@ public class ApiFootballClient {
 		new MongoClientHelperImpl().storeCompetitionsWithEventsAndOdds(competitionsPerCountry);
 	}
 
+	
+	
 	static void getEventsFor(List<Competition> competitions) throws IOException {
 		for (Competition competition : competitions) {
 			String url = ServerConstants.GET_EVENTS_FOR_DATES + ServerConstants.LEAGUE_URL + competition.getLeagueId() + ServerConstants.API_FOOTBALL_KEY;
 			
-			Calendar calendar = Calendar.getInstance();
-			Date today = calendar.getTime();
-			DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");  
-			String todayString = "2019-03-29";//dateFormat.format(today);
+			//Calendar calendar = Calendar.getInstance();
+			//Date today = calendar.getTime();
+			//DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");  
+			String todayString = "2019-05-09";//dateFormat.format(today);
 			
-			calendar.add(Calendar.DAY_OF_MONTH, 2);
-			String endDayString = "2019-03-30";// dateFormat.format(calendar.getTime());
+			//calendar.add(Calendar.DAY_OF_MONTH, 2);
+			String endDayString = "2019-05-12";// dateFormat.format(calendar.getTime());
 			
 			url = url.replace(ServerConstants.REPLACE_DATE_FROM, todayString).replace(ServerConstants.REPLACE_DATE_TO, endDayString);
 			
@@ -81,9 +83,9 @@ public class ApiFootballClient {
 			
 			Gson gson = new Gson();
 			List<Event> events = gson.fromJson(content,new TypeToken<List<Event>>() {}.getType());
+			new MongoClientHelperImpl().storeEvents(events);
 			
-			
-			competition.setEvents(events);
+			//competition.setEvents(events);
 			
 		}
 		getOddsFor(competitions);
@@ -111,9 +113,14 @@ public class ApiFootballClient {
 		Odd odd = new Odd();
 		odd.setOdd1("1,5");
 		odd.setOdd2("4");
-		odd.setOddX("3.8");
+		odd.setOddX("3,8");
 		
 		for (Competition competition : competitions2) {
+			
+			if (competition.getEvents()==null){
+				continue;//TODO: why?
+			}
+			
 			for (Event event : competition.getEvents()) {
 //				for (Odd odd : odds){
 //				

@@ -1,7 +1,6 @@
 package gr.server.def.service;
 
 import gr.server.application.exception.UserExistsException;
-import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserBet;
 
 import java.io.IOException;

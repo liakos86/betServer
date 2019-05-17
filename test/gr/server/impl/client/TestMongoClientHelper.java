@@ -9,6 +9,7 @@ import gr.server.data.user.model.UserPrediction;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.types.ObjectId;
 import org.junit.Test;
 
 public class TestMongoClientHelper {
@@ -20,18 +21,18 @@ public class TestMongoClientHelper {
 	public void testPlacePrediction(){
 		MongoClientHelperImpl mHelper = new MongoClientHelperImpl();
 		UserBet userBet = new UserBet();
-		userBet.setUserId("user1");
+		userBet.setMongoUserId("user1");
 		userBet.setBetAmount(30);
-		userBet.setBetStatus("open");
+		userBet.setBetStatus(1);
 		
 		List<UserPrediction> preds = new ArrayList<UserPrediction>();
 		UserPrediction pred = new UserPrediction();
 		pred.setEventId("395975");
-		pred.setPrediction("1");
+		pred.setPrediction(1);
 		preds.add(pred);
 		userBet.setPredictions(preds);
 		userBet = mHelper.placeBet(userBet);
-		System.out.println(userBet.getBetId());//(placePrediction.getObjectId("_id"));
+		System.out.println(userBet.getMongoUserId());//(placePrediction.getObjectId("_id"));
 	}
 	
 	/**
@@ -41,7 +42,7 @@ public class TestMongoClientHelper {
 	//@Test(expected=UserExistsException.class)
 	public void testCreateUser() throws UserExistsException{
 		MongoClientHelperImpl mHelper = new MongoClientHelperImpl();
-		User user = new User("");
+		User user = new User("id");
 		user.setUsername("kostas");
 		mHelper.createUser(user);
 	}

@@ -1,15 +1,8 @@
 package gr.server.data.user.model;
 
-import gr.server.data.api.model.events.Event;
-
 import java.io.Serializable;
 
-/**
- * This class represents a prediction on an {@link Event} by a {@link User}.
- * It participates along with other {@link UserPrediction}s into a {@link UserBet}
- *
- */
-public class UserPrediction implements Serializable{
+public class UserPrediction implements Serializable {
 	
 	/**
 	 * 
@@ -18,20 +11,31 @@ public class UserPrediction implements Serializable{
 
 	String eventId;
 	
-	String prediction;
+	int prediction;
 	
-	String result;
+	int predictionStatus;
 	
-	Double multiplier;
+	Double oddValue;
 	
-	public Double getMultiplier() {
-		return multiplier;
+	String predictionDescription;
+	
+	
+	public String getPredictionDescription() {
+		return predictionDescription;
 	}
 
-	public void setMultiplier(Double multiplier) {
-		this.multiplier = multiplier;
+	public void setPredictionDescription(String predictionDescription) {
+		this.predictionDescription = predictionDescription;
 	}
-	
+
+	public Double getOddValue() {
+		return oddValue;
+	}
+
+	public void setOddValue(Double oddValue) {
+		this.oddValue = oddValue;
+	}
+
 	public String getEventId() {
 		return eventId;
 	}
@@ -39,20 +43,29 @@ public class UserPrediction implements Serializable{
 	public void setEventId(String eventId) {
 		this.eventId = eventId;
 	}
-	public String getResult() {
-		return result;
+
+	
+	
+	public int getPredictionStatus() {
+		return predictionStatus;
 	}
 
-	public void setResult(String result) {
-		this.result = result;
+	public void setPredictionStatus(int predictionStatus) {
+		this.predictionStatus = predictionStatus;
 	}
-	
-	public String getPrediction() {
+
+	public int getPrediction() {
 		return prediction;
 	}
 
-	public void setPrediction(String prediction) {
+	public void setPrediction(int prediction) {
 		this.prediction = prediction;
+	}
+
+	public static void copyFields(UserPrediction sourcePrediction, UserPrediction destinationPrediction) {
+		destinationPrediction.setOddValue(sourcePrediction.getOddValue());
+		destinationPrediction.setPrediction(sourcePrediction.getPrediction());
+		destinationPrediction.setPredictionStatus(sourcePrediction.getPredictionStatus());
 	}
 
 }

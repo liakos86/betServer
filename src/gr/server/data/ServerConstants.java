@@ -2,9 +2,14 @@ package gr.server.data;
 
 public interface ServerConstants {
 	
+    public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm";
+	
 	public static final Double STARTING_BALANCE = 1000d;
 	
-	public static final String API_FOOTBALL_KEY = "&APIkey=1137079f2518afcc302025cd6e35dcf122297eac5660f8a506906140751ae3cd";
+	public static final String API_FOOTBALL_KEY = 
+			"&APIkey=091b4506464de043f80a412af02454b7f039735b5a485aedb3d037105401bd2e";
+			
+//			"&APIkey=1137079f2518afcc302025cd6e35dcf122297eac5660f8a506906140751ae3cd";
 
 	
 	public static final String GET_COUNTRIES_URL = "https://apifootball.com/api/?action=get_countries";

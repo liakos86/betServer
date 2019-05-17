@@ -5,7 +5,7 @@ import gr.server.data.api.model.Competition;
 import gr.server.data.api.model.CountryWithCompetitions;
 import gr.server.data.api.model.Odd;
 import gr.server.data.api.model.events.Event;
-import gr.server.data.user.enums.SupportedLeagues;
+import gr.server.data.enums.SupportedLeague;
 import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserBet;
 import gr.server.data.user.model.UserPrediction;
@@ -32,6 +32,13 @@ public interface MongoClientHelper {
 	public UserBet placeBet(UserBet userBet);
 	
 	/**
+	 * For every open {@link UserBet}, the system will iterate through its {@link UserPrediction}s
+	 * and will settle it favourably or not, depending on the FT status of all its predictions.
+	 * 
+	 */
+	void settleBets();
+	
+	/**
 	 * Creates a new {@link User} in the 'user' collection of the database.
 	 * In case a {@link Document} with the same username already exists,
 	 * a {@link UserExistsException} is thrown.
@@ -55,7 +62,7 @@ public interface MongoClientHelper {
 	 * 
 	 * @param competitionsPerCountry
 	 */
-	void storeCompetitionsWithEventsAndOdds(Map<SupportedLeagues, List<Competition>> competitionsPerCountry);
+	void storeCompetitionsWithEventsAndOdds(Map<SupportedLeague, List<Competition>> competitionsPerCountry);
 	
 	/**
 	 * {@link MyBetOddsServiceImpl} will call this method upon user's REST call.
@@ -68,11 +75,4 @@ public interface MongoClientHelper {
 	 */
 	List<CountryWithCompetitions> retrieveCompetitionsWithEventsAndOdds();
 
-	/**
-	 * For every open {@link UserBet}, the system will iterate through its {@link UserPrediction}s
-	 * and will settle it favourably or not, depending on the FT status of all its predictions.
-	 * 
-	 */
-	void settleBets();
-	
 }

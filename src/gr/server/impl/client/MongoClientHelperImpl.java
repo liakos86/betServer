@@ -1,21 +1,26 @@
 package gr.server.impl.client;
 import gr.server.application.exception.UserExistsException;
-import gr.server.data.ServerConstants;
+import gr.server.data.CollectionNames;
+import gr.server.data.Fields;
 import gr.server.data.api.model.Competition;
 import gr.server.data.api.model.CountryWithCompetitions;
-import gr.server.data.api.model.Odd;
 import gr.server.data.api.model.events.Event;
-import gr.server.data.user.enums.SupportedLeagues;
+import gr.server.data.bet.enums.BetStatus;
+import gr.server.data.bet.enums.PredictionStatus;
+import gr.server.data.bet.enums.PredictionValue;
+import gr.server.data.enums.SupportedLeague;
 import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserBet;
 import gr.server.data.user.model.UserPrediction;
 import gr.server.def.client.MongoClientHelper;
+import gr.server.mongo.util.Executor;
+import gr.server.mongo.util.MongoCollectionUtils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -58,67 +63,16 @@ implements MongoClientHelper {
 		MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
 		return mongoClient;
 	}
-
 	
-	@Override
-	public void settleBets(){
-		
-		Set<Event> finishedEvents = new HashSet<Event>();
-		
-		List<CountryWithCompetitions> retrieveCompetitionsWithEventsAndOdds = retrieveCompetitionsWithEventsAndOdds();
-		for (CountryWithCompetitions countryWithCompetitions : retrieveCompetitionsWithEventsAndOdds) {
-			for (Competition competition : countryWithCompetitions.getCompetitions()) {
-				for (Event event : competition.getEvents()) {
-					if (event.getMatchStatus().equals("FT")){
-						finishedEvents.add(event);
-					}
-				}
-				
-			}
-		}
-		
-		
-		//get open bets from mongo colleaton
-		
-		//iterate through the predictions
-		//if all predictions close settle the bet
-		
-		//client will later receive it as settled
-		
-		
-	}
+	/*
+	 * PUBLIC API
+	 * 
+	 */
 	
-	
-	@Override
-	public UserBet placeBet(UserBet userBet) {
-		MongoClient client = getMongoClient();
-		MongoDatabase database = client.getDatabase("BETDB");
-		MongoCollection<Document> collection = database.getCollection("userBets");
-		
-		Document newBet = new Document("userId", userBet.getUserId())
-				.append("betAmount", userBet.getBetAmount());
-				//.append("betStatus", userBet.getStatus().ordinal());
-		
-		BasicDBList newBetPredictions = new BasicDBList();
-		
-		for (UserPrediction prediction : userBet.getPredictions()) {
-			Document newBetPrediction = new Document("eventId", prediction.getEventId())
-			 .append("prediction", prediction.getPrediction());
-			newBetPredictions.add(newBetPrediction);
-		}
-		 
-		newBet.append("predictions", newBetPredictions);
-		collection.insertOne(newBet);
-		 
-		userBet.setBetId(newBet.getObjectId("_id").toString()); //needed for the client to search
-		 
-		return userBet;
-	}
-
 	@Override
 	public User createUser(User user) throws UserExistsException {
 		MongoClient client = getMongoClient();
-		MongoCollection<Document> users = client.getDatabase("BETDB").getCollection("user");
+		MongoCollection<Document> users = client.getDatabase("BETDB").getCollection(CollectionNames.USERS);
 		
 		 Document existingUser = new Document("username", user.getUsername());
 		 FindIterable<Document> find = users.find(existingUser);
@@ -128,111 +82,42 @@ implements MongoClientHelper {
 			 throw new UserExistsException("User " + user.getUsername() + " already exists");
 		 }
 		 
-		 Document newUser = new Document("username", user.getUsername())
-		 .append("wonEventsCount", 0)
-		 .append("lostEventsCount", 0)
-		 .append("wonSlipsCount", 0)
-		 .append("lostSlipsCount", 0)
-		 .append("balance", ServerConstants.STARTING_BALANCE)
-		 ;
-		
+		 Document newUser = MongoCollectionUtils.getNewUserDocument(user.getUsername());
 		 users.insertOne(newUser);
 		 
 		User createdUser = new User(newUser.getObjectId("_id").toString());
 		createdUser.setUsername(newUser.getString("username"));
+		createdUser.setPosition(MongoCollectionUtils.userPosition(createdUser));
 		return createdUser;
-	}
-
-	
-	public List<UserBet> getBetsForUser(String userId) {
-		MongoClient client = getMongoClient();
-		MongoCollection<Document> betsCollection = client.getDatabase("BETDB").getCollection("userBets");
-		
-		 Document userBets = new Document("userId", userId);
-		 FindIterable<Document> find = betsCollection.find(userBets);
-		 
-		 List<UserBet> bets  = new ArrayList<UserBet>();
-		 for (Document document : find) {
-			 String json = document.toJson();
-			 UserBet prediction = new Gson().fromJson(json, new TypeToken<UserBet>() {}.getType());
-			 prediction.setBetId(document.getObjectId("_id").toString());
-			 bets.add(prediction);
-		 }
-		 
-		 return bets;
 	}
 
 	@Override
 	public User getUser(String id) {
 		MongoClient client = getMongoClient();
-		MongoCollection<Document> users = client.getDatabase("BETDB").getCollection("user");
-		FindIterable<Document> usersFromMongo = users.find(new Document("_id", new ObjectId(id)));
+		MongoCollection<Document> users = client.getDatabase("BETDB").getCollection(CollectionNames.USERS);
+		FindIterable<Document> usersFromMongo = users.find(new Document(Fields.MONGO_ID, new ObjectId(id)));
 		Document userFromMongo = usersFromMongo.iterator().next();
 		String userString = userFromMongo.toJson();
 		User finalUser = new Gson().fromJson(userString, new TypeToken<User>() {}.getType());
 		finalUser.setUserBets(getBetsForUser(id));
-		finalUser.setId(id);
+		finalUser.setMongoId(userFromMongo.getObjectId(Fields.MONGO_ID).toString());
+		finalUser.setPosition(MongoCollectionUtils.userPosition(finalUser));
 		return finalUser;
 	}
-
-	public List<User> retrieveLeaderBoard() {
-		MongoClient client = getMongoClient();
-		MongoCollection<Document> users = client.getDatabase("BETDB").getCollection("user");
-		
-		
-		Document sortField = new Document("balance", -1);
-		FindIterable<Document> leaders = users.find( ).limit(10).sort( sortField );
-		
-
-		List<User> leaderBoardUsers = new ArrayList<User>();
-		for (Document leader : leaders){
-			String json = leader.toJson();
-			User user = new Gson().fromJson(json,
-					new TypeToken<User>() {}.getType());
-			leaderBoardUsers.add(user);
-		}
-		
-		
-		return leaderBoardUsers;
-	}
-
+	
 	@Override
-	public void storeCompetitionsWithEventsAndOdds(Map<SupportedLeagues, List<Competition>> competitionsPerCountry) {
+	public void storeCompetitionsWithEventsAndOdds(Map<SupportedLeague, List<Competition>> competitionsPerCountry) {
 		List<Document> newCompetitions = new ArrayList<Document>();
-		for(Map.Entry<SupportedLeagues, List<Competition>> entry : competitionsPerCountry.entrySet()){
-			SupportedLeagues supportedLeague = entry.getKey();
-			Document newSupportedLeague = new Document("country_id", supportedLeague.getCountryId())
-			 .append("country_name", supportedLeague.getCountryName());
+		for(Map.Entry<SupportedLeague, List<Competition>> entry : competitionsPerCountry.entrySet()){
 			List<Competition> comps = entry.getValue();
 			BasicDBList newComps = new BasicDBList();
 			for (Competition competition : comps) {
-			
-			Document newComp = new Document("league_id", competition.getLeagueId())
-			 .append("country_id", competition.getCountryId())
-			 .append("league_name", competition.getLeagueName())
-			 .append("country_name", competition.getCountryName());
-			
-			BasicDBList newEvents = new BasicDBList();
-			for (Event event : competition.getEvents()) {
-				Odd odd = event.getOdd();
-				Document newOdd = new Document("odd_1", odd.getOdd1())
-				.append("odd_2", odd.getOdd2())
-				.append("odd_x", odd.getOddX());
-				
-				Document newEvent = new Document("match_id", event.getMatchId())
-				.append("match_hometeam_name", event.getMatchHometeamName())
-				.append("match_awayteam_name", event.getMatchAwayteamName())
-				.append("match_date", event.getMatchDate())
-				.append("match_status", event.getMatchStatus())
-				.append("odd", newOdd);
-				
-				newEvents.add(newEvent);
-			}
-			newComp.append("events", newEvents);
-			newComps.add(newComp);
+				Document newCompetition = MongoCollectionUtils.getCompetitionDocument(competition);
+				newComps.add(newCompetition);
 			}
 			
-			newSupportedLeague.append("competitions", newComps);
+			SupportedLeague supportedLeague = entry.getKey();
+			Document newSupportedLeague = MongoCollectionUtils.getSupportedLeagueDocument(supportedLeague, newComps);
 			newCompetitions.add(newSupportedLeague);
 		}
 		
@@ -243,19 +128,153 @@ implements MongoClientHelper {
 
 	@Override
 	public List<CountryWithCompetitions> retrieveCompetitionsWithEventsAndOdds() {
-		List<CountryWithCompetitions> countriesWithCompetitions = new ArrayList<CountryWithCompetitions>();
-		
-		MongoClient client = getMongoClient();
-		MongoCollection<Document> competitions = client.getDatabase("BETDB").getCollection("competition");
-		FindIterable<Document> find = competitions.find();
-		for (Document comp : find){
-			String json = comp.toJson();
-			CountryWithCompetitions newComp = new Gson().fromJson(json,
-					new TypeToken<CountryWithCompetitions>() {}.getType());
-			countriesWithCompetitions.add(newComp);
+		Executor<CountryWithCompetitions> executor = new Executor<CountryWithCompetitions>(new TypeToken<CountryWithCompetitions>() { });
+		List<CountryWithCompetitions> countriesWithCompetitions = MongoCollectionUtils.get(CollectionNames.COMPETITIONS, new Document(), executor);
+		for (CountryWithCompetitions countryWithComp : countriesWithCompetitions){
+			for (Competition comp : countryWithComp.getCompetitions()){
+				Document eventsFilter = new Document("league_id", comp.getLeagueId()).append("country_id", comp.getCountryId());
+				Executor<Event> eventsExecutor = new Executor<Event>(new TypeToken<Event>() { });
+				List<Event> compEvents = MongoCollectionUtils.get(CollectionNames.EVENTS, eventsFilter, eventsExecutor);
+				comp.setEvents(compEvents);
+			}
 		}
 		
 		return countriesWithCompetitions;
+	}
+	
+	@Override
+	public UserBet placeBet(UserBet userBet) {
+		MongoClient client = getMongoClient();
+		MongoDatabase database = client.getDatabase("BETDB");
+		MongoCollection<Document> betsCollection = database.getCollection(CollectionNames.BETS);
+		
+		Document newBet = MongoCollectionUtils.getBetDocument(userBet);
+		betsCollection.insertOne(newBet);
+		userBet.setMongoId(newBet.getObjectId("_id").toString()); //needed for the client to search
+		 
+		MongoCollectionUtils.updateUser(userBet);
+		
+		return userBet;
+	}
+
+	
+	@Override
+	public void settleBets(){
+		List<Document> possibleValues = Arrays.asList(new Document[]{new Document("betStatus", BetStatus.PENDING.getCode()), new Document("betStatus", BetStatus.PENDING_LOST.getCode())});
+		Document openPendingBetsFilter = MongoCollectionUtils.getOrDocument("betStatus", possibleValues);
+		
+		Executor<UserBet> executor = new Executor<UserBet>(new TypeToken<UserBet>() { });
+		List<UserBet> openBets = MongoCollectionUtils.get(CollectionNames.BETS, openPendingBetsFilter, executor);
+
+		Document eventFilter = new Document("match_status", "FT");
+		Executor<Event> executorEvent = new Executor<Event>(new TypeToken<Event>() { });
+		List<Event> finished = MongoCollectionUtils.get(CollectionNames.EVENTS, eventFilter, executorEvent);
+
+		Map<String, Event> finishedEvents = new HashMap<String, Event>();
+		for (Event event : finished){
+			finishedEvents.put(event.getMatchId(), event);
+		}
+		
+		for (UserBet userBet : openBets){
+			settleBet(userBet, finishedEvents);
+		}
+	}
+	
+	//END OF PUBLIC API
+	
+	void settleBet(UserBet userBet, Map<String, Event> finishedEvents) {
+		for (UserPrediction prediction : userBet.getPredictions()){
+			if (PredictionStatus.PENDING.getCode() != prediction.getPredictionStatus()){
+				continue;
+			}
+			
+			Event predictionEvent = finishedEvents.get(prediction.getEventId());
+			PredictionValue result = calculateEventResult(predictionEvent);
+			if (result.getCode() == prediction.getPrediction()){
+				prediction.setPredictionStatus(PredictionStatus.CORRECT.getCode());
+			}else{
+				prediction.setPredictionStatus(PredictionStatus.MISSED.getCode());
+				userBet.setBetStatus(BetStatus.PENDING_LOST.getCode());
+			}
+		}
+		
+		if (shouldSettleFavourably(userBet)){
+			settleFavourably(userBet);
+		}
+		
+		if (shouldSettleUnfavourably(userBet)){
+			settleUnfavourably(userBet);
+		}
+		
+		userBet = MongoCollectionUtils.updateBet(userBet);
+		MongoCollectionUtils.updateUser(userBet);
+	}
+
+	void settleUnfavourably(UserBet userBet) {
+		userBet.setBetStatus(BetStatus.SETTLED_INFAVOURABLY.getCode());
+	}
+	
+	void settleFavourably(UserBet userBet) {
+		userBet.setBetStatus(BetStatus.SETTLED_FAVOURABLY.getCode());
+	}
+
+	PredictionValue calculateEventResult(Event predictionEvent) {
+		Integer matchHometeamScore = Integer.parseInt(predictionEvent.getMatchHometeamScore());
+		Integer matchAwayTeamScore = Integer.parseInt(predictionEvent.getMatchAwayteamScore());
+		PredictionValue predictionEventResult = matchHometeamScore > matchAwayTeamScore ? PredictionValue.HOME : (matchHometeamScore.equals(matchAwayTeamScore) ? PredictionValue.DRAW : PredictionValue.AWAY);
+		return predictionEventResult;
+	}
+
+	boolean shouldSettleUnfavourably(UserBet userBet) {
+		boolean atLeastOneMissed = false;
+		for (UserPrediction prediction : userBet.getPredictions()){
+			if (PredictionStatus.PENDING.getCode() == prediction.getPredictionStatus()){
+				return false;
+			}
+			if (PredictionStatus.MISSED.getCode() == prediction.getPredictionStatus()){
+				atLeastOneMissed = true;
+			}
+		}
+		
+		if (atLeastOneMissed){
+			return true;
+		}
+		return false;
+	}
+
+	boolean shouldSettleFavourably(UserBet userBet) {
+		for (UserPrediction prediction : userBet.getPredictions()){
+			if (PredictionStatus.CORRECT.getCode() != prediction.getPredictionStatus()){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public List<UserBet> getBetsForUser(String userId) {
+		Document userBetsFilter = new Document("userId", userId);
+		Executor<UserBet> betsExecutor = new Executor<UserBet>(new TypeToken<UserBet>() { });
+		List<UserBet> bets = MongoCollectionUtils.get(CollectionNames.EVENTS, userBetsFilter, betsExecutor);
+		 return bets;
+	}
+
+	public List<User> retrieveLeaderBoard() {
+		Document sortField = new Document("balance", -1);
+		Executor<User> usersExecutor = new Executor<User>(new TypeToken<User>() { });
+		List<User> users = MongoCollectionUtils.getSorted(CollectionNames.USERS, usersExecutor, sortField, 10);
+		return users;
+	}
+	
+	public void storeEvents(List<Event> events) {
+		List<Document> newEvents = new ArrayList<Document>();
+		for (Event event : events) {
+			Document newEvent = MongoCollectionUtils.getEventDocument(event);
+			newEvents.add(newEvent);
+		}
+		
+		MongoClient client = getMongoClient();
+		MongoCollection<Document> eventsCollection = client.getDatabase("BETDB").getCollection(CollectionNames.EVENTS);
+		eventsCollection.insertMany(newEvents);
 	}
 	
 }

@@ -1,6 +1,6 @@
-package gr.server.data.user.enums;
+package gr.server.data.enums;
 
-public enum SupportedLeagues {
+public enum SupportedLeague {
 	
 	CHL (163, "Champions League"),
 	EUROPA_LEAGUE(164, "Europa League"),
@@ -10,7 +10,7 @@ public enum SupportedLeagues {
 	 SPAIN(171,"Spain");
 	 
 	 
-	 SupportedLeagues(Integer countryId, String countryName){
+	 SupportedLeague(Integer countryId, String countryName){
 		 this.countryId = countryId;
 		 this.countryName = countryName;
 	 }

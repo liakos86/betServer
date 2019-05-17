@@ -30,8 +30,7 @@ import com.google.gson.reflect.TypeToken;
 @Produces(MediaType.APPLICATION_XML)
 public class MyBetOddsServiceImpl 
 implements MyBetOddsService {
-	
-	
+
 	
 	@Override
 	@GET
@@ -57,11 +56,11 @@ implements MyBetOddsService {
 			e.printStackTrace();
 		}
 		
-		UserBet prediction = new Gson().fromJson(userPredictionBuilder.toString(),
+		UserBet bet = new Gson().fromJson(userPredictionBuilder.toString(),
 				new TypeToken<UserBet>() {}.getType());
-		prediction = new MongoClientHelperImpl().placeBet(prediction);
+		bet = new MongoClientHelperImpl().placeBet(bet);
 		
-		return new Gson().toJson(prediction);
+		return new Gson().toJson(bet);
 		
 	}
 	

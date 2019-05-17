@@ -1,9 +1,9 @@
 package gr.server.data.user.model;
 
+import gr.server.data.ServerConstants;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import gr.server.data.ServerConstants;
 
 /**
  * User of the application.
@@ -12,11 +12,16 @@ import gr.server.data.ServerConstants;
  *
  */
 public class User {
+	
+	/**
+	 * Unique object id as defined by mongoDb during insert.
+	 */
+	String mongoId;
 
 	/**
 	 * Unique id as defined by mongoDb during insert.
 	 */
-	String id;
+	//String id;
 	
 	/**
 	 * The unique username that the app user will demand.
@@ -49,9 +54,11 @@ public class User {
 	Integer lostEventsCount;
 	
 	List<UserBet> userBets;
+	
+	Long position;
 
-	public User(String id) {
-		this.id = id;
+	public User(String mongoId) {
+		this.mongoId = mongoId;
 		this.balance = ServerConstants.STARTING_BALANCE;
 		this.lostEventsCount = 0;
 		this.lostSlipsCount = 0;
@@ -60,20 +67,29 @@ public class User {
 		this.userBets = new ArrayList<UserBet>();
 	}
 	
+	
+	public String getMongoId() {
+		return mongoId;
+	}
+
+	public void setMongoId(String mongoId) {
+		this.mongoId = mongoId;
+	}
+
+	public Long getPosition() {
+		return position;
+	}
+
+	public void setPosition(Long position) {
+		this.position = position;
+	}
+
 	public List<UserBet> getUserBets() {
 		return userBets;
 	}
 
 	public void setUserBets(List<UserBet> userBets) {
 		this.userBets = userBets;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
 	}
 
 	public String getUsername() {
@@ -123,7 +139,5 @@ public class User {
 	public void setLostEventsCount(Integer lostEventsCount) {
 		this.lostEventsCount = lostEventsCount;
 	}
-	
-	
 	
 }
