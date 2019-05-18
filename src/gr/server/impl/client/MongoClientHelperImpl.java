@@ -2,6 +2,7 @@ package gr.server.impl.client;
 import gr.server.application.exception.UserExistsException;
 import gr.server.data.CollectionNames;
 import gr.server.data.Fields;
+import gr.server.data.ServerConstants;
 import gr.server.data.api.model.Competition;
 import gr.server.data.api.model.CountryWithCompetitions;
 import gr.server.data.api.model.events.Event;
@@ -10,11 +11,14 @@ import gr.server.data.bet.enums.PredictionStatus;
 import gr.server.data.bet.enums.PredictionValue;
 import gr.server.data.enums.SupportedLeague;
 import gr.server.data.user.model.User;
+import gr.server.data.user.model.UserAward;
 import gr.server.data.user.model.UserBet;
 import gr.server.data.user.model.UserPrediction;
 import gr.server.def.client.MongoClientHelper;
 import gr.server.mongo.util.Executor;
 import gr.server.mongo.util.MongoCollectionUtils;
+import gr.server.util.DateUtils;
+import gr.server.util.TimerTaskHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,6 +104,7 @@ implements MongoClientHelper {
 		String userString = userFromMongo.toJson();
 		User finalUser = new Gson().fromJson(userString, new TypeToken<User>() {}.getType());
 		finalUser.setUserBets(getBetsForUser(id));
+		finalUser.setUserAwards(getAwardsForUser(id));
 		finalUser.setMongoId(userFromMongo.getObjectId(Fields.MONGO_ID).toString());
 		finalUser.setPosition(MongoCollectionUtils.userPosition(finalUser));
 		return finalUser;
@@ -147,16 +152,12 @@ implements MongoClientHelper {
 		MongoClient client = getMongoClient();
 		MongoDatabase database = client.getDatabase("BETDB");
 		MongoCollection<Document> betsCollection = database.getCollection(CollectionNames.BETS);
-		
 		Document newBet = MongoCollectionUtils.getBetDocument(userBet);
 		betsCollection.insertOne(newBet);
-		userBet.setMongoId(newBet.getObjectId("_id").toString()); //needed for the client to search
-		 
+		userBet.setMongoId(newBet.getObjectId(Fields.MONGO_ID).toString()); 
 		MongoCollectionUtils.updateUser(userBet);
-		
 		return userBet;
 	}
-
 	
 	@Override
 	public void settleBets(){
@@ -225,6 +226,10 @@ implements MongoClientHelper {
 		return predictionEventResult;
 	}
 
+	/**
+	 * If user missed one prediction, the {@link UserBet} is considered lost.
+	 * 
+	 */
 	boolean shouldSettleUnfavourably(UserBet userBet) {
 		boolean atLeastOneMissed = false;
 		for (UserPrediction prediction : userBet.getPredictions()){
@@ -252,16 +257,23 @@ implements MongoClientHelper {
 	}
 
 	public List<UserBet> getBetsForUser(String userId) {
-		Document userBetsFilter = new Document("userId", userId);
+		Document userBetsFilter = new Document(Fields.USER_ID, userId);
 		Executor<UserBet> betsExecutor = new Executor<UserBet>(new TypeToken<UserBet>() { });
 		List<UserBet> bets = MongoCollectionUtils.get(CollectionNames.EVENTS, userBetsFilter, betsExecutor);
 		 return bets;
 	}
+	
+	public List<UserAward> getAwardsForUser(String userId) {
+		Document userAwardsFilter = new Document(Fields.USER_ID, userId);
+		Executor<UserAward> awardsExecutor = new Executor<UserAward>(new TypeToken<UserAward>() { });
+		List<UserAward> awards = MongoCollectionUtils.get(CollectionNames.EVENTS, userAwardsFilter, awardsExecutor);
+		 return awards;
+	}
 
 	public List<User> retrieveLeaderBoard() {
-		Document sortField = new Document("balance", -1);
+		Document sortField = new Document(Fields.USER_BALANCE, -1);
 		Executor<User> usersExecutor = new Executor<User>(new TypeToken<User>() { });
-		List<User> users = MongoCollectionUtils.getSorted(CollectionNames.USERS, usersExecutor, sortField, 10);
+		List<User> users = MongoCollectionUtils.getSorted(CollectionNames.USERS, usersExecutor, new Document(), sortField, 10);
 		return users;
 	}
 	
@@ -277,4 +289,26 @@ implements MongoClientHelper {
 		eventsCollection.insertMany(newEvents);
 	}
 	
+	/**
+	 * Runs on the midnight of the first day of the month.
+	 * Finds the winner.
+	 * Stores an award.
+	 * Updates the winner's fields.
+	 * Restores every user's balance to {@link ServerConstants#STARTING_BALANCE}.
+	 * Deletes bets going 2 months ago.
+	 * 
+	 * @see TimerTaskHelper#getMonthChangeCheckerTask()
+	 */
+	public void settleMonthlyAward(String monthToSettle){
+		Document sortField = new Document(Fields.USER_BALANCE, -1);
+		Executor<User> usersExecutor = new Executor<User>(new TypeToken<User>() { });
+		List<User> monthWinners = MongoCollectionUtils.getSorted(CollectionNames.USERS, usersExecutor, new Document(), sortField, 1);
+		//TODO tied users
+		Document awardDocument = MongoCollectionUtils.createAwardFor(monthWinners.get(0));
+		MongoCollectionUtils.updateUserAwards(monthWinners.get(0), awardDocument.getObjectId(Fields.MONGO_ID));
+		
+		MongoCollectionUtils.restoreUserBalance();
+		MongoCollectionUtils.deleteUserBetsFor(DateUtils.getPastMonthAsString(2));
+	}
+
 }

@@ -12,6 +12,7 @@ import gr.server.data.enums.SupportedLeague;
 import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserBet;
 import gr.server.data.user.model.UserPrediction;
+import gr.server.util.DateUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,10 +44,10 @@ public class MongoCollectionUtils {
 		return list;
 	}
 	
-	public static <E> ArrayList<E> getSorted(String collectionString,  Executor<E> e, Document sortFilter, int limit){
+	public static <E> ArrayList<E> getSorted(String collectionString,  Executor<E> e, Document findFilter, Document sortFilter, int limit){
 		MongoClient client = RestApplication.getMongoClient();
 		MongoCollection<Document> collection = client.getDatabase("BETDB").getCollection(collectionString);
-		 FindIterable<Document> find = collection.find().limit(limit).sort(sortFilter);
+		 FindIterable<Document> find = collection.find(findFilter).limit(limit).sort(sortFilter);
 		 ArrayList<E> list  = new ArrayList<E>();
 		 for (Document document : find) {
 			 String json = document.toJson();
@@ -77,7 +78,7 @@ public class MongoCollectionUtils {
 		Document newBet = new Document("mongoUserId", userBet.getMongoUserId())
 				.append("betAmount", userBet.getBetAmount())
 				.append("betStatus", userBet.getBetStatus())
-				.append("betPlaceDate", userBet.getBetPlaceDate());
+				.append(Fields.BET_PLACE_DATE, userBet.getBetPlaceDate());
 
 		BasicDBList newBetPredictions = new BasicDBList();
 
@@ -112,14 +113,14 @@ public class MongoCollectionUtils {
 		if (userBet.getBetStatus() == BetStatus.SETTLED_FAVOURABLY.getCode()){//bet won
 			userFieldsDocument.append("wonSlipsCount", 1)
 			.append("wonEventsCount", userBet.getPredictions().size())
-			.append("balance", userBet.getPossibleEarnings());
+			.append(Fields.USER_BALANCE, userBet.getPossibleEarnings());
 		}else if (userBet.getBetStatus() == BetStatus.SETTLED_INFAVOURABLY.getCode()){//bet lost
 			int correctPredictions = numOfSuccessFullPredictions(userBet);
 			userFieldsDocument.append("lostSlipsCount", 1)
 			.append("wonEventsCount", correctPredictions)
 			.append("lostEventsCount", userBet.getPredictions().size() - correctPredictions);
 		}else if (userBet.getBetStatus() == BetStatus.PENDING.getCode()){// bet placed
-			userFieldsDocument.append("balance", -1 * (userBet.getBetAmount()));
+			userFieldsDocument.append(Fields.USER_BALANCE, -1 * (userBet.getBetAmount()));
 		}
 		Document increaseOrDecreaseDocument = new Document("$inc", userFieldsDocument);
 		usersCollection.findOneAndUpdate(filter, increaseOrDecreaseDocument);
@@ -157,10 +158,11 @@ public class MongoCollectionUtils {
 	}
 
 	public static Document getBetDocument(UserBet userBet) {
-		Document newBet = new Document("mongoUserId", userBet.getMongoUserId())
-				.append("betAmount", userBet.getBetAmount())
-				.append("betStatus", userBet.getBetStatus())
-				.append("betPlaceDate", userBet.getBetPlaceDate());
+		Document newBet = new Document(Fields.BET_MONGO_USER_ID, userBet.getMongoUserId())
+				.append(Fields.BET_AMOUNT, userBet.getBetAmount())
+				.append(Fields.BET_STATUS, userBet.getBetStatus())
+				.append(Fields.BET_PLACE_DATE, userBet.getBetPlaceDate())
+				.append(Fields.BET_BELONGING_MONTH, DateUtils.getPastMonthAsString(0));
 
 		BasicDBList newBetPredictions = new BasicDBList();
 
@@ -186,8 +188,12 @@ public class MongoCollectionUtils {
 		 .append("lostEventsCount", 0)
 		 .append("wonSlipsCount", 0)
 		 .append("lostSlipsCount", 0)
-		 .append("balance", ServerConstants.STARTING_BALANCE)
-		 ;
+		 .append(Fields.USER_OVERALL_WON_EVENTS, 0)
+		 .append(Fields.USER_OVERALL_LOST_EVENTS, 0)
+		 .append(Fields.USER_OVERALL_WON_SLIPS, 0)
+		 .append(Fields.USER_OVERALL_LOST_SLIPS, 0)
+		 .append(Fields.USER_BALANCE, ServerConstants.STARTING_BALANCE)
+		 .append(Fields.USER_AWARDS, new BasicDBList());
 	}
 
 	public static Document getCompetitionDocument(Competition competition) {
@@ -214,11 +220,46 @@ public class MongoCollectionUtils {
 	}
 	
 	public static long userPosition(User user){
-		Document userBalance = new Document("$gte", user.getBalance());
-		Document greaterBalancedUsers = new Document("balance", userBalance);
+		Document userBalance = new Document("$gt", user.getBalance());
+		Document greaterBalancedUsers = new Document(Fields.USER_BALANCE, userBalance);
 		MongoClient client = RestApplication.getMongoClient();
 		MongoCollection<Document> usersCollection = client.getDatabase("BETDB").getCollection(CollectionNames.USERS);
 		return usersCollection.count(greaterBalancedUsers);
+	}
+
+	public static Document createAwardFor(User monthWinner) {
+		Document awardDocument = new Document();
+		awardDocument.append(Fields.AWARD_WINNER, monthWinner.getMongoId())
+		.append(Fields.AWARD_MONTH, DateUtils.getPastMonthAsString(0))
+		.append(Fields.AWARD_BALANCE, monthWinner.getBalance());
+		MongoClient client = RestApplication.getMongoClient();
+		MongoCollection<Document> awardsCollection = client.getDatabase("BETDB").getCollection(CollectionNames.AWARDS);
+		awardsCollection.insertOne(awardDocument);
+		return awardDocument;
+	}
+
+	public static void updateUserAwards(User monthWinner, ObjectId awardId) {
+		Document userFilter = new Document(Fields.USER_ID, monthWinner.getMongoId());
+		Document newAwardDocument = new Document(Fields.USER_AWARDS_IDS, awardId.toString());
+		Document pushDocument = new Document("$push", newAwardDocument);
+		MongoClient client = RestApplication.getMongoClient();
+		MongoCollection<Document> usersCollection = client.getDatabase("BETDB").getCollection(CollectionNames.USERS);
+		usersCollection.findOneAndUpdate(userFilter, pushDocument);
+	}
+
+	public static void restoreUserBalance() {
+		Document balanceFilter = new Document(Fields.USER_BALANCE, ServerConstants.STARTING_BALANCE);
+		Document setBalance = new Document("$set", balanceFilter);
+		MongoClient client = RestApplication.getMongoClient();
+		MongoCollection<Document> usersCollection = client.getDatabase("BETDB").getCollection(CollectionNames.USERS);
+		usersCollection.updateMany(new Document(), setBalance);
+	}
+
+	public static void deleteUserBetsFor(String pastMonthAsString) {
+		Document belongingMonthFilter = new Document(Fields.BET_BELONGING_MONTH, pastMonthAsString);
+		MongoClient client = RestApplication.getMongoClient();
+		MongoCollection<Document> betsCollection = client.getDatabase("BETDB").getCollection(CollectionNames.BETS);
+		betsCollection.deleteMany(belongingMonthFilter);
 	}
 
 }

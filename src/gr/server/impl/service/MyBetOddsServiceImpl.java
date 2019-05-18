@@ -67,7 +67,7 @@ implements MyBetOddsService {
 //	@Override
 //	@POST
 //    @Path("/placeBet/{eventId}/{userId}/{prediction}/{amount}")
-//	public Document placeBet(@PathParam("eventId") String eventId, @PathParam("userId") String userId, @PathParam("prediction") String prediction, @PathParam("amount") Integer amount) {
+//	public Document placeBet(@PathParam("eventId") String eventId, @PathParam(Fields.USER_ID) String userId, @PathParam("prediction") String prediction, @PathParam("amount") Integer amount) {
 //		UserPrediction userPrediction = new UserPrediction();
 //		userPrediction.setBetAmount(amount);
 //		userPrediction.setEventId(eventId);

@@ -1,10 +1,9 @@
 package gr.server.application;
 
-import gr.server.data.user.model.User;
-import gr.server.impl.client.MongoClientHelperImpl;
-import gr.server.mongo.util.MongoCollectionUtils;
+import gr.server.data.ServerConstants;
+import gr.server.util.DateUtils;
+import gr.server.util.TimerTaskHelper;
 
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -23,20 +22,11 @@ implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
-			TimerTask task = new TimerTask() {
-		        public void run() {
-		            System.out.println("Task performed on: " + new Date() + "n" +
-		              "Thread's name: " + Thread.currentThread().getName());
-		            
-		            User u = new User("rr");
-		            u.setBalance(44d);
-		            new MongoClientHelperImpl().settleBets();
-		        }
-		    };
-		    Timer timer = new Timer("Timer");
-		     
-		    long delay = 10L;
-		    timer.schedule(task, delay);
+			TimerTask monthChangeCheckerTask = TimerTaskHelper.getMonthChangeCheckerTask();
+		    Timer timer = new Timer("CheckMonthChangeTimer");
+		   // timer.scheduleAtFixedRate(monthChangeCheckerTask, DateUtils.getTomorrowMidnight(),  ServerConstants.DAILY_INTERVAL);
+	
+		    timer.schedule(monthChangeCheckerTask, 0);
 	}
 
 }

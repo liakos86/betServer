@@ -8,8 +8,6 @@ import java.util.List;
 /**
  * User of the application.
  * 
- * @author liakos
- *
  */
 public class User {
 	
@@ -18,11 +16,6 @@ public class User {
 	 */
 	String mongoId;
 
-	/**
-	 * Unique id as defined by mongoDb during insert.
-	 */
-	//String id;
-	
 	/**
 	 * The unique username that the app user will demand.
 	 */
@@ -56,6 +49,30 @@ public class User {
 	List<UserBet> userBets;
 	
 	Long position;
+	
+	/**
+	 * Total/overall Number of won slips.
+	 */
+	Integer overallWonSlipsCount;
+	
+	/**
+	 * Total/overall Number of lost slips.
+	 */
+	Integer overallLostSlipsCount;
+	
+	/**
+	 * Total/overall Number of won events.
+	 */
+	Integer overallWonEventsCount;
+	
+	/**
+	 * Total/overall Number of lost events.
+	 */
+	Integer overallLostEventsCount;
+	
+	List<UserAward> userAwards; 
+	
+	List<String> userAwardsIds;
 
 	public User(String mongoId) {
 		this.mongoId = mongoId;
@@ -64,10 +81,66 @@ public class User {
 		this.lostSlipsCount = 0;
 		this.wonEventsCount = 0;
 		this.wonSlipsCount = 0;
+		this.overallLostEventsCount = 0;
+		this.overallLostSlipsCount = 0;
+		this.overallWonEventsCount = 0;
+		this.overallWonSlipsCount = 0;
 		this.userBets = new ArrayList<UserBet>();
+		this.userAwards = new ArrayList<UserAward>();
 	}
 	
-	
+	public List<String> getUserAwardsIds() {
+		return userAwardsIds;
+	}
+
+
+
+	public void setUserAwardsIds(List<String> userAwardsIds) {
+		this.userAwardsIds = userAwardsIds;
+	}
+
+
+
+	public List<UserAward> getUserAwards() {
+		return userAwards;
+	}
+
+	public void setUserAwards(List<UserAward> userAwards) {
+		this.userAwards = userAwards;
+	}
+
+	public Integer getOverallWonSlipsCount() {
+		return overallWonSlipsCount;
+	}
+
+	public void setOverallWonSlipsCount(Integer overallWonSlipsCount) {
+		this.overallWonSlipsCount = overallWonSlipsCount;
+	}
+
+	public Integer getOverallLostSlipsCount() {
+		return overallLostSlipsCount;
+	}
+
+	public void setOverallLostSlipsCount(Integer overallLostSlipsCount) {
+		this.overallLostSlipsCount = overallLostSlipsCount;
+	}
+
+	public Integer getOverallWonEventsCount() {
+		return overallWonEventsCount;
+	}
+
+	public void setOverallWonEventsCount(Integer overallWonEventsCount) {
+		this.overallWonEventsCount = overallWonEventsCount;
+	}
+
+	public Integer getOverallLostEventsCount() {
+		return overallLostEventsCount;
+	}
+
+	public void setOverallLostEventsCount(Integer overallLostEventsCount) {
+		this.overallLostEventsCount = overallLostEventsCount;
+	}
+
 	public String getMongoId() {
 		return mongoId;
 	}

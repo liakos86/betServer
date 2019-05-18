@@ -5,6 +5,7 @@ import gr.server.data.api.model.CountryWithCompetitions;
 import gr.server.data.user.model.User;
 import gr.server.data.user.model.UserBet;
 import gr.server.data.user.model.UserPrediction;
+import gr.server.util.DateUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +66,15 @@ public class TestMongoClientHelper {
 		
 		List<CountryWithCompetitions> retrieveCompetitionsWithEventsAndOdds = new MongoClientHelperImpl().retrieveCompetitionsWithEventsAndOdds();
 		System.out.println(retrieveCompetitionsWithEventsAndOdds.size());
+		
+	}
+	
+	
+	@Test
+	public void testGetPreviousMonthAsString(){
+		System.out.println(DateUtils.getPastMonthAsString(1));
+		
+		System.out.println(DateUtils.isFirstDayOfMonth());
 		
 	}
 	

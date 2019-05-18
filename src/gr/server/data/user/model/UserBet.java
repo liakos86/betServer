@@ -19,15 +19,19 @@ public class UserBet implements Serializable{
 
 	String mongoUserId;
 	
-	int betStatus;
+	/**
+	 * Every bet participates in a monthy contest. 
+	 * This is the yyyy/MM representation of the belonging month.
+	 */
+	String belongingMonth;
+	
+	Integer betStatus;
 	
 	Integer betAmount;
 	
 	List<UserPrediction> predictions;
 	
 	String betPlaceDate;
-	
-	
 	
 	public String getMongoId() {
 		return mongoId;
@@ -70,12 +74,20 @@ public class UserBet implements Serializable{
 	}
 
 
-	public int getBetStatus() {
+	public Integer getBetStatus() {
 		return betStatus;
 	}
 
-	public void setBetStatus(int betStatus) {
+	public void setBetStatus(Integer betStatus) {
 		this.betStatus = betStatus;
+	}
+	
+	public String getBelongingMonth() {
+		return belongingMonth;
+	}
+
+	public void setBelongingMonth(String belongingMonth) {
+		this.belongingMonth = belongingMonth;
 	}
 
 	public Double getPossibleEarnings() {
@@ -85,6 +97,5 @@ public class UserBet implements Serializable{
 		}
 	    return possibleEarnings;
 	}
-
 
 }
